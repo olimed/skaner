@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <script src="https://cdn.rawgit.com/serratus/quaggaJS/0420d5e0/dist/quagga.min.js"></script> -->
+    <!-- <script src="//unpkg.com/javascript-barcode-reader"></script> -->
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/5.6.55/css/materialdesignicons.min.css" type="text/css" charset="utf-8">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./src/styles/styles.css" type="text/css">
+    <title>Scanner</title>
+</head>
+<body>
+    <!-- <div class="" >
+        <div class="webix_el_box" style="width:465px; height:38px">
+            <label style="text-align:left; line-height:32px; width:80px;" onclick="" for="1603726584987" class="webix_inp_label ">Email</label>
+            <input id="1603726584987" type="text" value="dummy@email.com" style="width: 381px; text-align: left;">
+            <span style="height:26px;padding-top:6px;" class="webix_input_icon wxi-search"></span>
+        </div>
+    </div>
+    <div id="scanner-container"></div>
+    <input type="button" id="btn" value="Start/Stop the scanner" />
+
+
+      <script>
+//   var width = 320;    // Этим создадим ширину фотографии
+//   var height = 0;    // Это будет вычисляться на основе входящего потока
+
+//   var streaming = false;
+
+//   var video = null;
+//   var canvas = null;
+//   var photo = null;
+//   var startbutton = null;
+
+//   function startup() {
+//     video = document.getElementById('video');
+//     canvas = document.getElementById('canvas');
+//     photo = document.getElementById('photo');
+//     startbutton = document.getElementById('startbutton');
+
+//     navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+//     .then(function(stream) {
+//         video.srcObject = stream;
+//         video.play();
+//     })
+//     .catch(function(err) {
+//         console.log("An error occurred: " + err);
+//     });
+
+//     video.addEventListener('canplay', function(ev){
+//       if (!streaming) {
+//         height = video.videoHeight / (video.videoWidth/width);
+      
+//         video.setAttribute('width', width);
+//         video.setAttribute('height', height);
+//         canvas.setAttribute('width', width);
+//         canvas.setAttribute('height', height);
+//         streaming = true;
+//       }
+//     }, false);
+
+//     startbutton.addEventListener('click', function(ev){
+//       takepicture();
+//       ev.preventDefault();
+//     }, false);
+
+//     clearphoto();
+//   }
+
+//   function clearphoto() {
+//     var context = canvas.getContext('2d');
+//     context.fillStyle = "#AAA";
+//     context.fillRect(0, 0, canvas.width, canvas.height);
+
+//     var data = canvas.toDataURL('image/png');
+//     photo.setAttribute('src', data);
+//   }
+
+//   function takepicture() {
+//     var context = canvas.getContext('2d');
+//     if (width && height) {
+//       canvas.width = width;
+//       canvas.height = height;
+//       context.drawImage(video, 0, 0, width, height);
+    
+//       var data = canvas.toDataURL('image/png');
+//       photo.setAttribute('src', data);
+//     } else {
+//       clearphoto();
+//     }
+//   }
+
+//   window.addEventListener('load', startup, false);
+var _scannerIsRunning = false;
+
+        function startScanner() {
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#scanner-container'),
+                    constraints: {
+                        width: 480,
+                        height: 320,
+                        facingMode: "environment"
+                    },
+                },
+                decoder: {
+                    readers: [
+                        // "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        // "code_39_reader",
+                        // "code_39_vin_reader",
+                        // "codabar_reader",
+                        // "upc_reader",
+                        // "upc_e_reader",
+                        // "i2of5_reader"
+                    ],
+                    debug: {
+                        showCanvas: true,
+                        showPatches: true,
+                        showFoundPatches: true,
+                        showSkeleton: true,
+                        showLabels: true,
+                        showPatchLabels: true,
+                        showRemainingPatchLabels: true,
+                        boxFromPatches: {
+                            showTransformed: true,
+                            showTransformedBox: true,
+                            showBB: true
+                        }
+                    }
+                },
+
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                    return
+                }
+
+                console.log("Initialization finished. Ready to start");
+                Quagga.start();
+
+                // Set flag to is running
+                _scannerIsRunning = true;
+            });
+
+            Quagga.onProcessed(function (result) {
+                var drawingCtx = Quagga.canvas.ctx.overlay,
+                drawingCanvas = Quagga.canvas.dom.overlay;
+
+                if (result) {
+                    if (result.boxes) {
+                        drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
+                        result.boxes.filter(function (box) {
+                            return box !== result.box;
+                        }).forEach(function (box) {
+                            Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, drawingCtx, { color: "green", lineWidth: 2 });
+                        });
+                    }
+
+                    if (result.box) {
+                        Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, drawingCtx, { color: "#00F", lineWidth: 2 });
+                    }
+
+                    if (result.codeResult && result.codeResult.code) {
+                        Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, drawingCtx, { color: 'red', lineWidth: 3 });
+                    }
+                }
+            });
+
+
+            Quagga.onDetected(function (result) {
+                console.log("Barcode detected and processed : [" + result.codeResult.code + "]", result);
+            });
+        }
+
+        
+        // Start/stop scanner
+        document.getElementById("btn").addEventListener("click", function () {
+            if (_scannerIsRunning) {
+                Quagga.stop();
+            } else {
+                startScanner();
+            }
+        }, false);
+      </script> -->
+<script src="main.js"></script>
+    </body>
+</html>
